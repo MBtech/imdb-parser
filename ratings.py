@@ -2,6 +2,39 @@ import requests
 from bs4 import BeautifulSoup
 import sys
 
+def rating_demographic(table):
+    data = dict()
+    rows = table.findAll('tr')[1:]
+    ages = ["All Ages", "<18", "18-29", "30-44", "45+"]
+    for row in rows:
+        entries = row.findAll('td')
+        key = entries[0].text.strip()
+        data[key] = dict()
+        i = 0
+        for entry in entries[1:]:
+            data[key][ages[i]] = dict()
+            data[key][ages[i]]["rating"] = float(entry.find('div', attrs={'class': 'bigcell'}).text.strip())
+            data[key][ages[i]]["votes"] = int(entry.find('div', attrs={'class': 'smallcell'}).text.strip().replace(',', ''))
+            i+=1
+    print data
+
+def rating_other_demographic(table):
+        data = dict()
+        cols= table.findAll('tr')[0].findAll('th')
+        header =  [col.text.strip() for col in cols]
+
+        rows = table.findAll('tr')[1:]
+        for row in rows:
+            i = 0
+            entries = row.findAll('td')
+            for entry in entries:
+                key = header[i]
+                data[key] = dict()
+                data[key]["rating"] = float(entry.find('div', attrs={'class': 'bigcell'}).text.strip())
+                data[key]["votes"] = int(entry.find('div', attrs={'class': 'smallcell'}).text.strip().replace(',', ''))
+                i+=1
+        print data
+
 relative_ref = sys.argv[1]
 base_url = "https://www.imdb.com"
 rating_url = base_url + relative_ref + "ratings"
@@ -20,3 +53,5 @@ for rating in overall_ratings[1:]:
     number_of_votes = cols[2].text.strip('\n').strip().replace(',', '')
     total_votes += int(number_of_votes)
     print stars, percentage, number_of_votes
+rating_demographic( soup.findAll('table')[1])
+rating_other_demographic(soup.findAll('table')[2])
