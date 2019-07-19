@@ -19,10 +19,11 @@ def rating_demographic(table):
                 votes = 0
             else:
                 rating = float(rating)
-                data[key][ages[i]]["votes"] = int(entry.find('div', attrs={'class': 'smallcell'}).text.strip().replace(',', ''))
+                votes = int(entry.find('div', attrs={'class': 'smallcell'}).text.strip().replace(',', ''))
             data[key][ages[i]]["rating"] = rating
+            data[key][ages[i]]["votes"] = votes
             i+=1
-    print data
+    # print data
     return data
 
 def rating_other_demographic(table):
@@ -37,10 +38,18 @@ def rating_other_demographic(table):
             for entry in entries:
                 key = header[i]
                 data[key] = dict()
-                data[key]["rating"] = float(entry.find('div', attrs={'class': 'bigcell'}).text.strip())
-                data[key]["votes"] = int(entry.find('div', attrs={'class': 'smallcell'}).text.strip().replace(',', ''))
+                rating = entry.find('div', attrs={'class': 'bigcell'}).text.strip()
+                if rating == "-":
+                    rating = 0.0
+                    votes = 0
+                else:
+                    rating = float(rating)
+                    votes = int(entry.find('div', attrs={'class': 'smallcell'}).text.strip().replace(',', ''))
+
+                data[key]["rating"] = rating
+                data[key]["votes"] = votes
                 i+=1
-        print data
+        # print data
         return data
 
 def get_ratings(title_ref):
@@ -49,13 +58,13 @@ def get_ratings(title_ref):
     rating_url = base_url + relative_ref + "ratings"
 
     page = requests.get(rating_url)
-    print rating_url
+    # print rating_url
     soup = BeautifulSoup(page.text, 'html.parser')
     # print soup
     ratings_available = soup.find('div', attrs={'class': 'title-ratings-sub-page'})\
         .find('div', attrs={'class' : 'sectionHeading'}).text.strip('\n').strip()
 
-    print ratings_available
+    # print ratings_available
     if ratings_available == "No Ratings Available":
         return None
 
@@ -72,8 +81,10 @@ def get_ratings(title_ref):
         number_of_votes = cols[2].text.strip('\n').strip().replace(',', '')
         total_votes += int(number_of_votes)
         # print stars, percentage, number_of_votes
-        histogram_votes.append(number_of_votes)
-        histogram_percentage.append(percentage)
+        histogram_votes.append(int(number_of_votes))
+        if percentage == "":
+            percentage = "0.0"
+        histogram_percentage.append(float(percentage))
 
     histogram_votes.reverse()
     histogram_percentage.reverse()
